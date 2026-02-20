@@ -3,31 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JDP SUPREME - LINK & SCREEN v14.0</title>
+    <title>JDP SUPREME - v15.0</title>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <style>
         :root {
             --neon-blue: #00f2ff;
             --neon-red: #ff3333;
-            --gold-text: #fcf6ba; /* Cor de Ouro */
+            --gold-text: #fcf6ba;
             --gold-gradient: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
             --industrial-bg: #020202;
         }
 
-        * { 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent; 
-            color: var(--gold-text) !important; /* Todas as letras em Ouro conforme solicitado */
-        }
+        * { box-sizing: border-box; color: var(--gold-text) !important; font-family: 'Orbitron', sans-serif; }
 
         body {
             background-color: var(--industrial-bg);
-            font-family: 'Orbitron', sans-serif;
             margin: 0; height: 100vh; width: 100vw;
             display: flex; flex-direction: column; overflow: hidden;
         }
 
-        /* PAINEL DE CONEXÃO */
         #connection-panel {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.98); z-index: 9999;
@@ -37,89 +31,69 @@
 
         .input-jdp {
             background: #111; border: 2px solid #bf953f; color: gold;
-            padding: 15px; margin: 10px; border-radius: 10px; width: 85%; font-size: 1rem;
+            padding: 15px; margin: 10px; border-radius: 10px; width: 85%;
         }
 
-        /* BARRAS DE CONTROLE */
         .player-bar {
             height: 90px; width: 100%; background: #0a0a0a;
             display: flex; align-items: center; justify-content: space-around;
-            padding: 5px; border-bottom: 1px solid #333;
+            border-bottom: 1px solid #333;
         }
 
-        .btn-gold {
-            background: var(--gold-gradient); color: #000 !important; border: none;
-            padding: 8px 12px; border-radius: 8px; font-weight: bold; font-size: 0.75rem;
-            cursor: pointer;
-        }
+        #game-area { flex: 1; display: flex; align-items: center; justify-content: center; }
 
-        /* ÁREA DO JOGO E TABULEIRO CENTRALIZADO */
-        #game-area { 
-            flex: 1; display: flex; align-items: center; justify-content: center; 
-            position: relative; background: radial-gradient(circle, #111 0%, #000 100%);
-        }
+        /* ROTAÇÃO DO TABULEIRO PARA O P2 */
+        .rotate-board { transform: rotate(180deg); }
 
         #board {
             display: grid; 
             grid-template-columns: repeat(8, 11vmin); 
             grid-template-rows: repeat(8, 11vmin);
             border: 4px solid #bf953f;
-            box-shadow: 0 0 30px rgba(191, 149, 63, 0.3);
         }
 
         .square { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
         .square.dark { background: #080808; }
         .square.light { background: #1a1a1a; }
 
-        .piece {
-            width: 80%; height: 80%; border-radius: 50%;
-            transition: 0.3s; position: relative;
-        }
+        .piece { width: 80%; height: 80%; border-radius: 50%; transition: 0.3s; }
         .piece.p1 { background: var(--neon-blue); box-shadow: 0 0 15px var(--neon-blue); }
         .piece.p2 { background: var(--neon-red); box-shadow: 0 0 15px var(--neon-red); }
+        
+        /* Se o tabuleiro estiver rodado, as coroas devem rodar de volta para ficarem de pé */
+        .rotate-board .piece { transform: rotate(180deg); }
         .piece.king::after { content: '👑'; font-size: 1.2rem; display: block; text-align: center; }
 
-        /* VÍDEO / SCREEN SHARE EM MINIATURA */
-        .remote-screen {
-            width: 70px; height: 70px; border: 2px solid gold; border-radius: 10px;
-            overflow: hidden; background: #000;
+        .btn-gold {
+            background: var(--gold-gradient); color: #000 !important; border: none;
+            padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer;
         }
-        video { width: 100%; height: 100%; object-fit: cover; }
 
         #celebration-overlay {
             position: fixed; top: 0; left: -100%; width: 100%; height: 100%;
             background: rgba(0,0,0,0.9); z-index: 5000;
-            display: none; align-items: center; justify-content: center;
+            display: none; align-items: center; justify-content: center; transition: 0.5s;
         }
     </style>
 </head>
 <body>
 
     <div id="connection-panel">
-        <h1 style="color: #bf953f;">SISTEMA JDP SUPREME</h1>
+        <h1 style="color: #bf953f;">JDP SUPREME v15</h1>
         <p>SUA ID: <span id="my-id" style="color: white !important;">...</span></p>
-        
         <input type="text" id="peer-id-input" class="input-jdp" placeholder="ID do Parceiro">
-        
         <div style="display: flex; gap: 10px;">
             <button class="btn-gold" onclick="startHost()">CRIAR SALA</button>
             <button class="btn-gold" onclick="connectToPeer()">CONECTAR</button>
         </div>
-        
-        <hr style="width: 80%; margin: 20px; border-color: #333;">
-        
-        <p>Links de Mídia (MP4/JPG):</p>
-        <input type="text" id="link-img" class="input-jdp" placeholder="Link da sua Foto">
-        <input type="text" id="link-vid" class="input-jdp" placeholder="Link do seu Vídeo">
-        
-        <button class="btn-gold" onclick="document.getElementById('connection-panel').style.display='none'">ENTRAR NO SISTEMA</button>
+        <p>Link do Vídeo (Comemoração):</p>
+        <input type="text" id="link-vid" class="input-jdp" placeholder="URL do Vídeo .mp4">
+        <button class="btn-gold" onclick="document.getElementById('connection-panel').style.display='none'">JOGAR AGORA</button>
     </div>
 
     <div class="player-bar">
-        <div class="remote-screen" id="container-p2">
-            <video id="video-p2" autoplay playsinline></video>
-        </div>
-        <div id="status-p2">ESPERANDO PARCEIRO...</div>
+        <div id="status-p2">OPONENTE</div>
+        <video id="video-p2" style="width:70px; height:70px; border:1px solid gold;" autoplay playsinline></video>
     </div>
 
     <div id="game-area">
@@ -127,44 +101,29 @@
     </div>
 
     <div class="player-bar">
-        <button class="btn-gold" onclick="startScreenShare()">COMPARTILHAR TELA</button>
-        <div class="remote-screen" id="container-p1">
-            <video id="video-p1" autoplay playsinline muted></video>
-        </div>
-        <button class="btn-gold" onclick="alert('PIX: Pradolindalva4@gmail.com')">PIX JDP</button>
+        <button class="btn-gold" onclick="startScreenShare()">TELA</button>
+        <video id="video-p1" style="width:70px; height:70px; border:1px solid gold;" autoplay playsinline muted></video>
+        <button class="btn-gold" onclick="initBoard()">RESET</button>
     </div>
 
     <div id="celebration-overlay">
-        <div style="border: 5px solid gold; width: 80%;">
-            <video id="celebration-video" autoplay playsinline></video>
-            <h2 style="text-align: center;">HAHAHAHAHA!</h2>
-        </div>
+        <video id="celebration-video" style="width: 80%; border: 5px solid gold;" autoplay playsinline></video>
     </div>
 
     <script>
         let peer, conn, localStream;
-        let myRole = null;
+        let myRole = 'p1'; // P1 = Azul, P2 = Vermelho
         let turn = 'p1';
         let boardState = [];
         let selected = null;
 
-        // Iniciar PeerJS
         peer = new Peer('JDP-' + Math.floor(Math.random() * 90000));
         peer.on('open', id => document.getElementById('my-id').innerText = id);
 
-        // Receber Chamada de Vídeo/Tela
-        peer.on('call', call => {
-            call.answer(localStream);
-            call.on('stream', remoteStream => {
-                document.getElementById('video-p2').srcObject = remoteStream;
-            });
-        });
-
-        // Receber Conexão de Dados
         peer.on('connection', c => {
-            conn = c;
-            myRole = 'p1';
-            setupDataChanel();
+            conn = c; myRole = 'p1';
+            applyRotation();
+            setupData();
             document.getElementById('connection-panel').style.display = 'none';
         });
 
@@ -172,26 +131,21 @@
             const id = document.getElementById('peer-id-input').value;
             conn = peer.connect(id);
             myRole = 'p2';
-            setupDataChanel();
+            applyRotation();
+            setupData();
             document.getElementById('connection-panel').style.display = 'none';
         }
 
-        async function startScreenShare() {
-            try {
-                // Captura a tela do telefone
-                localStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-                document.getElementById('video-p1').srcObject = localStream;
-                
-                // Se já estiver conectado, liga para o parceiro ver a tela
-                if (conn) {
-                    peer.call(conn.peer, localStream);
-                }
-            } catch (err) {
-                console.error("Erro ao compartilhar tela: ", err);
+        function applyRotation() {
+            const board = document.getElementById('board');
+            if (myRole === 'p2') {
+                board.classList.add('rotate-board');
+            } else {
+                board.classList.remove('rotate-board');
             }
         }
 
-        function setupDataChanel() {
+        function setupData() {
             conn.on('data', data => {
                 if (data.type === 'move') {
                     boardState = data.board;
@@ -202,20 +156,6 @@
             });
         }
 
-        function playCelebration(url) {
-            if (!url) return;
-            const overlay = document.getElementById('celebration-overlay');
-            const video = document.getElementById('celebration-video');
-            overlay.style.display = 'flex';
-            overlay.style.left = '0';
-            video.src = url;
-            setTimeout(() => { 
-                overlay.style.display = 'none'; 
-                overlay.style.left = '-100%';
-            }, 6000);
-        }
-
-        // LÓGICA DO TABULEIRO (Resumida para integração)
         function initBoard() {
             boardState = Array(8).fill(null).map(() => Array(8).fill(null));
             for (let r = 0; r < 8; r++) {
@@ -239,7 +179,7 @@
                     if (piece) {
                         const p = document.createElement('div');
                         p.className = `piece ${piece.p} ${piece.k?'king':''}`;
-                        if (selected && selected.r === r && selected.c === c) p.style.border = "3px solid white";
+                        if (selected && selected.r === r && selected.c === c) p.style.outline = "4px solid gold";
                         sq.appendChild(p);
                     }
                     sq.onclick = () => handleClick(r, c);
@@ -249,13 +189,23 @@
         }
 
         function handleClick(r, c) {
-            if (myRole && turn !== myRole) return;
+            if (turn !== myRole) return;
             const piece = boardState[r][c];
+
             if (selected) {
-                if (executeMove(selected.r, selected.c, r, c)) {
+                const moveInfo = executeMove(selected.r, selected.c, r, c);
+                if (moveInfo.success) {
                     const nextTurn = turn === 'p1' ? 'p2' : 'p1';
-                    const vid = document.getElementById('link-vid').value;
-                    if (conn) conn.send({ type: 'move', board: boardState, nextTurn, captured: true, vidLink: vid });
+                    if (conn) {
+                        conn.send({
+                            type: 'move',
+                            board: boardState,
+                            nextTurn: nextTurn,
+                            captured: moveInfo.captured,
+                            vidLink: document.getElementById('link-vid').value
+                        });
+                    }
+                    if (moveInfo.captured) playCelebration(document.getElementById('link-vid').value);
                     turn = nextTurn;
                 }
                 selected = null;
@@ -266,11 +216,57 @@
         }
 
         function executeMove(fr, fc, tr, tc) {
-            // Lógica simplificada de movimento
-            if (boardState[tr][tc]) return false;
-            boardState[tr][tc] = boardState[fr][fc];
-            boardState[fr][fc] = null;
-            return true;
+            const p = boardState[fr][fc];
+            const dr = tr - fr;
+            const dc = tc - fc;
+            const absDr = Math.abs(dr);
+            const absDc = Math.abs(dc);
+
+            if (boardState[tr][tc]) return { success: false };
+
+            // Movimento Simples
+            if (absDr === 1 && absDc === 1) {
+                if (!p.k && ((p.p === 'p1' && dr > 0) || (p.p === 'p2' && dr < 0))) return { success: false };
+                boardState[tr][tc] = p;
+                boardState[fr][fc] = null;
+                checkKing(tr, p);
+                return { success: true, captured: false };
+            }
+
+            // Captura (Comer peça)
+            if (absDr === 2 && absDc === 2) {
+                const mr = (fr + tr) / 2;
+                const mc = (fc + tc) / 2;
+                const middlePiece = boardState[mr][mc];
+                if (middlePiece && middlePiece.p !== p.p) {
+                    boardState[tr][tc] = p;
+                    boardState[fr][fc] = null;
+                    boardState[mr][mc] = null; // A PEÇA SUMIU!
+                    checkKing(tr, p);
+                    return { success: true, captured: true };
+                }
+            }
+            return { success: false };
+        }
+
+        function checkKing(r, p) {
+            if (p.p === 'p1' && r === 0) p.k = true;
+            if (p.p === 'p2' && r === 7) p.k = true;
+        }
+
+        function playCelebration(url) {
+            if (!url) return;
+            const ov = document.getElementById('celebration-overlay');
+            const vi = document.getElementById('celebration-video');
+            ov.style.display = 'flex'; ov.style.left = '0';
+            vi.src = url;
+            setTimeout(() => { ov.style.left = '-100%'; ov.style.display = 'none'; }, 5000);
+        }
+
+        async function startScreenShare() {
+            localStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            document.getElementById('video-p1').srcObject = localStream;
+            if (conn) peer.call(conn.peer, localStream);
         }
 
         window.onload = initBoard;
