@@ -75,6 +75,16 @@
             display: none; align-items: center; justify-content: center; transition: 0.5s;
         }
     </style>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#bf953f">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" sizes="192x192" href="icon-192.png">
+    <link rel="icon" sizes="512x512" href="icon-512.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
 </head>
 <body>
 
@@ -270,6 +280,14 @@
         }
 
         window.onload = initBoard;
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(reg => console.log('SISTEMA JDP: MOTOR ATIVO'));
+            });
+        }
     </script>
 </body>
 </html>
