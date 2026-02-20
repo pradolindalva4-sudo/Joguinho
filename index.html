@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JDP SUPREME - MULTI-DEVICE v14.0</title>
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <style>
+        :root {
+            --neon-blue: #00f2ff;
+            --neon-red: #ff3333;
+            --gold: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+            --industrial-bg: #020202;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+
+        body {
+            background-color: var(--industrial-bg);
+            color: #fff; font-family: 'Orbitron', sans-serif;
+            margin: 0; height: 100vh; width: 100vw;
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        /* PAINEL DE CONEXÃO */
+        #connection-panel {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; text-align: center;
+        }
+
+        .input-jdp {
+            background: #111; border: 2px solid var(--neon-blue); color: #fff;
+            padding: 15px; margin: 10px; border-radius: 10px; width: 80%; font-size: 1rem;
+        }
+
+        /* BOTÃO CADEADO */
+        #lock-system {
+            position: fixed; top: 50%; right: 10px; transform: translateY(-50%);
+            z-index: 1000; width: 50px; height: 50px; border-radius: 50%;
+            background: #222; border: 2px solid #444;
+            display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+        }
+
+        /* BARRAS */
+        .player-bar {
+            height: 80px; width: 100%; background: #0a0a0a;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 15px; border-bottom: 1px solid #333;
+        }
+
+        .photo-circle {
+            width: 55px; height: 55px; border-radius: 50%;
+            border: 2px solid var(--neon-blue); overflow: hidden; background: #000;
+        }
+        .photo-circle img { width: 100%; height: 100%; object-fit: cover; }
+
+        .btn-gold {
+            background: var(--gold); color: #000; border: none;
+            padding: 10px 15px; border-radius: 10px; font-weight: bold; font-size: 0.7rem;
+        }
+
+        /* TABULEIRO */
+        #game-area { flex: 1; display: flex; align-items: center; justify-content: center; }
+        #board {
+            display: grid; grid-template-columns: repeat(8, 12vw); grid-template-rows: repeat(8, 12vw);
+            border: 5px solid #1a1a1a;
+        }
+        @media (min-height: 700px) { #board { grid-template-columns: repeat(8, 11vh); grid-template-rows: repeat(8, 11vh); } }
+
+        .square { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .square.dark { background: #080808; }
+        .square.light { background: #151515; }
+
+        .piece {
+            width: 85%; height: 85%; border-radius: 50%;
+            background-size: cover; transition: 0.2s;
+        }
+        .piece.p1 { background-color: var(--neon-blue); box-shadow: 0 0 15px var(--neon-blue); }
+        .piece.p2 { background-color: var(--neon-red); box-shadow: 0 0 15px var(--neon-red); }
+        .piece.king::after { content: '👑'; font-size: 1.2rem; display: block; text-align: center; }
+        .selected { border: 4px solid #fff !important; transform: scale(1.1); }
+
+        /* CELEBRAÇÃO */
+        #celebration-overlay {
+            position: fixed; top: 0; left: -100%; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 5000;
+            display: none; align-items: center; justify-content: center;
+        }
+        .video-container { width: 85%; border: 5px solid gold; position: relative; animation: heart 0.6s infinite; }
+        #celebration-video { width: 100%; }
+        .haha {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 3rem; color: #fff; text-shadow: 0 0 20px gold; font-weight: 900; width: 100%; text-align: center;
+        }
+
+        @keyframes heart { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        @keyframes wave { 0% { left: -100%; } 20%, 80% { left: 0; } 100% { left: 100%; } }
+        .wave-active { display: flex !important; animation: wave 3s ease-in-out 3; }
+    </style>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#bf953f">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" sizes="192x192" href="icon-192.png">
+    <link rel="icon" sizes="512x512" href="icon-512.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+</head>
+<body>
+
+    <!-- TELA DE CONEXÃO -->
+    <div id="connection-panel">
+        <h1 style="color: gold;">JDP LINK SYSTEM</h1>
+        <p>Sua ID: <span id="my-id" style="color: var(--neon-blue);">Carregando...</span></p>
+        <button class="btn-gold" onclick="startHost()">GERAR SALA SUPREME</button>
+        <div style="margin: 20px 0;">OU</div>
+        <input type="text" id="peer-id-input" class="input-jdp" placeholder="Digite o código do parceiro">
+        <button class="btn-gold" onclick="connectToPeer()">CONECTAR AO CELULAR</button>
+        <button style="margin-top: 30px; background: none; border: 1px solid #444; color: #444;" onclick="document.getElementById('connection-panel').style.display='none'">JOGAR LOCAL (MESMO CELULAR)</button>
+    </div>
+
+    <div id="lock-system">🔓</div>
+
+    <div class="player-bar">
+        <div class="photo-circle" id="circle-p2" onclick="document.getElementById('f2').click()">
+            <img id="img-p2" src="">
+            <input type="file" id="f2" hidden onchange="handleMedia(this, 'p2-img')">
+        </div>
+        <button class="btn-gold" onclick="document.getElementById('v2').click()">+ VÍDEO 👩</button>
+        <input type="file" id="v2" hidden accept="video/*" onchange="handleMedia(this, 'p2-vid')">
+    </div>
+
+    <div id="game-area">
+        <div id="board"></div>
+    </div>
+
+    <div class="player-bar">
+        <button class="btn-gold" onclick="document.getElementById('v1').click()">+ VÍDEO 👤</button>
+        <input type="file" id="v1" hidden accept="video/*" onchange="handleMedia(this, 'p1-vid')">
+        <div class="photo-circle" id="circle-p1" onclick="document.getElementById('f1').click()">
+            <img id="img-p1" src="">
+            <input type="file" id="f1" hidden onchange="handleMedia(this, 'p1-img')">
+        </div>
+    </div>
+
+    <div id="celebration-overlay">
+        <div class="video-container">
+            <video id="celebration-video" playsinline></video>
+            <div class="haha">HAHAHAHAHAHAHA</div>
+        </div>
+    </div>
+
+    <script>
+        let peer, conn;
+        let myRole = null; // 'p1' ou 'p2'
+        let turn = 'p1';
+        let boardState = [];
+        let selected = null;
+        let mediaData = { 'p1-img': '', 'p2-img': '', 'p1-vid': '', 'p2-vid': '' };
+
+        // INICIALIZAR PEERJS
+        peer = new Peer('JDP-' + Math.floor(Math.random() * 9000 + 1000));
+        peer.on('open', id => document.getElementById('my-id').innerText = id);
+        
+        peer.on('connection', c => {
+            conn = c;
+            myRole = 'p1'; // Quem cria é o Sr. José (P1)
+            setupConn();
+            document.getElementById('connection-panel').style.display = 'none';
+        });
+
+        function connectToPeer() {
+            const id = document.getElementById('peer-id-input').value;
+            conn = peer.connect(id);
+            myRole = 'p2'; // Quem conecta é a Esposa (P2)
+            setupConn();
+            document.getElementById('connection-panel').style.display = 'none';
+        }
+
+        function setupConn() {
+            conn.on('data', data => {
+                if (data.type === 'move') {
+                    boardState = data.board;
+                    turn = data.nextTurn;
+                    if (data.captured) triggerCelebration(data.player);
+                    render();
+                }
+            });
+        }
+
+        function handleMedia(input, type) {
+            if (input.files[0]) {
+                const url = URL.createObjectURL(input.files[0]);
+                mediaData[type] = url;
+                if (type.includes('img')) document.getElementById('img-' + type.split('-')[0]).src = url;
+                render();
+            }
+        }
+
+        function triggerCelebration(p) {
+            const vidUrl = mediaData[p + '-vid'];
+            if (!vidUrl) return;
+            const overlay = document.getElementById('celebration-overlay');
+            const video = document.getElementById('celebration-video');
+            overlay.classList.add('wave-active');
+            video.src = vidUrl;
+            video.play();
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+            setTimeout(() => overlay.classList.remove('wave-active'), 9000);
+        }
+
+        function initBoard() {
+            boardState = Array(8).fill(null).map(() => Array(8).fill(null));
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    if ((r + c) % 2 !== 0) {
+                        if (r < 3) boardState[r][c] = { p: 'p2', k: false };
+                        if (r > 4) boardState[r][c] = { p: 'p1', k: false };
+                    }
+                }
+            }
+            render();
+        }
+
+        function render() {
+            const b = document.getElementById('board');
+            b.innerHTML = '';
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const sq = document.createElement('div');
+                    sq.className = `square ${(r+c)%2===0?'light':'dark'}`;
+                    const data = boardState[r][c];
+                    if (data) {
+                        const p = document.createElement('div');
+                        p.className = `piece ${data.p} ${data.k?'king':''}`;
+                        if (mediaData[data.p + '-img']) p.style.backgroundImage = `url('${mediaData[data.p + '-img']}')`;
+                        if (selected && selected.r === r && selected.c === c) p.classList.add('selected');
+                        sq.appendChild(p);
+                    }
+                    sq.onclick = () => handleClick(r, c);
+                    b.appendChild(sq);
+                }
+            }
+        }
+
+        function handleClick(r, c) {
+            // Se estiver no modo remoto, só pode mover se for o seu turno
+            if (myRole && turn !== myRole) return;
+
+            const piece = boardState[r][c];
+            if (selected) {
+                const moveResult = executeMove(selected.r, selected.c, r, c);
+                if (moveResult) {
+                    const captured = moveResult === 'cap';
+                    if (captured) triggerCelebration(turn);
+                    
+                    const nextTurn = (turn === 'p1') ? 'p2' : 'p1';
+                    
+                    // Sincronizar com o outro aparelho
+                    if (conn) {
+                        conn.send({
+                            type: 'move',
+                            board: boardState,
+                            nextTurn: nextTurn,
+                            captured: captured,
+                            player: turn
+                        });
+                    }
+                    
+                    turn = nextTurn;
+                }
+                selected = null;
+                render();
+            } else if (piece && piece.p === turn) {
+                selected = { r, c };
+                render();
+            }
+        }
+
+        function executeMove(fr, fc, tr, tc) {
+            if (boardState[tr][tc]) return false;
+            const p = boardState[fr][fc];
+            const dr = tr - fr; const dc = tc - fc;
+            if (Math.abs(dr) === 1 && Math.abs(dc) === 1) {
+                if (!p.k && ((p.p === 'p1' && dr > 0) || (p.p === 'p2' && dr < 0))) return false;
+                boardState[tr][tc] = p; boardState[fr][fc] = null;
+                if ((p.p==='p1' && tr===0) || (p.p==='p2' && tr===7)) p.k = true;
+                return 'move';
+            }
+            if (Math.abs(dr) === 2 && Math.abs(dc) === 2) {
+                const mr = (fr + tr) / 2; const mc = (fc + tc) / 2;
+                if (boardState[mr][mc] && boardState[mr][mc].p !== p.p) {
+                    boardState[tr][tc] = p; boardState[fr][fc] = null; boardState[mr][mc] = null;
+                    if ((p.p==='p1' && tr===0) || (p.p==='p2' && tr===7)) p.k = true;
+                    return 'cap';
+                }
+            }
+            return false;
+        }
+
+        window.onload = initBoard;
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(reg => console.log('SISTEMA JDP: MOTOR ATIVO'));
+            });
+        }
+    </script>
+</body>
+</html>
